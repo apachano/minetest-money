@@ -3,13 +3,14 @@ Money API
 This mod adds money to players
 
 Code from mana by Wuzzy is used under WTFPL Liscense
-check his profile out at minetest.net (I cant add a url because the minetest engine does not like the characters)
-
 ]]
 
 --[===[
 	Initialization
 ]===]
+
+--[Add Chat Command Builder By rubenwardy * would like to add support but cant figure out :(]
+--dofile("ChatCmdBuilder.lua")
 
 --[[ I need to figure out how this works to use it :/ coming soon?
 local S
@@ -62,6 +63,23 @@ function money.subtract(playername, value)
 	if(t ~= nil and t.money >= value and value >= 0) then
 		t.money = t.money - value 
 		money.hud_update(playername)
+		return true
+	else
+		return false
+	end
+end
+
+function money.send(sender, reciver, value)
+	local Sender = money.playerlist[sender]
+	local Reciver = money.playerlist[reciver]
+	value = money.round(value)
+	if(Sender ~= nil and Reciver ~= nil and Sender.money > value and value >= 0) then
+		money.subtract(sender, value)
+		money.add(reciver, value)
+		minetest.chat_send_player("sender", "You sent" .. value .. "to" .. reciver)
+		minetest.chat_send_player("reciver", "You recived" .. value .. "from" .. sender)
+		money.hud_update(sender)
+		money.hud_update(reciver)
 		return true
 	else
 		return false
@@ -137,7 +155,7 @@ minetest.register_on_joinplayer(
 		
 		if money.playerlist[playername] == nil then
 			money.playerlist[playername] = {}
-			money.playerlist[playername].money = 0
+			money.playerlist[playername].money = 50
 		end
 
 		money.hud_add(playername)
@@ -180,6 +198,37 @@ end
 --[===[
 	Helper functions
 ]===]
+
 money.round = function(x)
 	return math.ceil(math.floor(x+0.5))
 end
+
+--[===[
+	Chat Commands
+]===]
+
+minetest.register_chatcommand("sendmoney", {
+	privs = {
+		interact = true
+	},
+
+	func = money.send(name, param, 10)
+
+})
+
+--[[
+ChatCmdBuilder.new("money", function(cmd)
+	cmd:sub("send :to :ammount", function(name, to, ammount)
+		local player = minetest.get_player_by_name(target)
+		if player then
+			money.send(player:get_player_name(), to, ammount)
+		end
+	end)
+end, {
+	description = "Momey mod for MineTest",
+	privs = {
+		basic_privs
+	}
+}
+
+)]]--

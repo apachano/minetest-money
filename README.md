@@ -1,6 +1,6 @@
 # minetest-money
-# Version 0.1.0
-# Minetest Version 0.4.16
+### Version 0.1.1
+### Minetest Version 0.4.16
 Money API for use in minetest
 
 This mod is "Forked" From Wuzzys mana mod and modified to be used as an interface for money. Credit for original code goes to Wuzzy.

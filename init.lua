@@ -9,7 +9,7 @@ Code from mana by Wuzzy is used under WTFPL Liscense
 	Initialization
 ]===]
 
---[Add Chat Command Builder By rubenwardy * would like to add support but cant figure out :(]
+--Add Chat Command Builder By rubenwardy
 dofile(minetest.get_modpath("money") .. "/ChatCmdBuilder.lua")
 
 --[[ I need to figure out how this works to use it :/ coming soon?
@@ -242,7 +242,15 @@ ChatCmdBuilder.new("money",
 				money.add(to, amount)
 				return true
 			else
-				return false, "player does not exist"
+				return false, "Player does not exist"
+			end
+		end)
+		cmd:sub("take :from :ammount:int", function(name, from, amount)
+			if money.playerList[from] ~= nil then
+				money.subtract(from, amount))
+				return true;
+			else
+				return false; "Player does not exist"
 			end
 		end)
 	end, {

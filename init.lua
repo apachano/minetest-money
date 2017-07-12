@@ -206,7 +206,7 @@ end
 
 function money.help()
 	minetest.chat_send_player(name, "=====Money=====")
-	minetest.chat_send_player(name, "/sendmoney <player> <ammount> -> sends money to specified player")
+	minetest.chat_send_player(name, "/sendmoney <player> <amount> -> sends money to specified player")
 	minetest.chat_send_player(name, "=====Money=====")
 	minetest.chat_send_player(name, "=====Money=====")
 	minetest.chat_send_player(name, "=====Money=====")
@@ -219,10 +219,10 @@ end
 
 ChatCmdBuilder.new("money", 
 	function(cmd)
-		cmd:sub("send :to :ammount", function(name, to, ammount)
+		cmd:sub("send :to :amount", function(name, to, amount)
 			local player = minetest.get_player_by_name(to)
 			if player then
-				money.send(player:get_player_name(), to, ammount)
+				money.send(player:get_player_name(), to, amount)
 				return true
 			else
 				return false, "player does not exist"
@@ -237,10 +237,10 @@ ChatCmdBuilder.new("money",
 )
 ChatCmdBuilder.new("adminmoney", 
 	function(cmd)
-		cmd:sub("give :to :ammount:int", function(to, ammount)
+		cmd:sub("give :to :amount:int", function(to, amount)
 			if money.playerlist[to] ~= nil then
-				--money.add(to, ammount)--(to, ammount)
-				minetest.chat_send_player("SonosFuer", "to: " .. to .. " ammount: " .. ammount)
+				--money.add(to, amount)--(to, amount)
+				minetest.chat_send_player("SonosFuer", "to: " .. to .. " amount: " .. amount)
 				return true
 			else
 				return false, "player does not exist"

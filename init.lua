@@ -235,6 +235,23 @@ ChatCmdBuilder.new("money",
 		}
 	}
 )
+ChatCmdBuilder.new("money",
+	function(cmd)
+		cmd:sub("check :player", function(name, player)
+			if money.playerlist[player] ~= nil then
+				money.get(player)
+				return true
+			else
+				return false, "Player does not exist"
+			end
+		end)
+	end, {
+		description = "get player money value"
+		privs = {
+			money_check
+		}
+	}
+)
 ChatCmdBuilder.new("money", 
 	function(cmd)
 		cmd:sub("give :to :amount:int", function(name, to, amount)

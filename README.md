@@ -1,12 +1,5 @@
-<<<<<<< HEAD
-# minetest-money
-# Version 0.1.0
-# Minetest Version 0.4.16
-Money API for use in minetest
-
-=======
 # Minetest-money
-### Version 0.1.1
+### Version 0.2.0
 ### Minetest Version 0.4.16
 Liscense: MIT -> https://opensource.org/licenses/MIT
 Author: SonosFuer

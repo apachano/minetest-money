@@ -222,7 +222,7 @@ ChatCmdBuilder.new("money",
 		cmd:sub("send :to :amount", function(name, to, amount)
 			local player = minetest.get_player_by_name(to)
 			if player then
-				money.send(player:get_player_name(), to, amount)
+				money.send(name, to, amount)
 				return true
 			else
 				return false, "player does not exist"
@@ -235,12 +235,11 @@ ChatCmdBuilder.new("money",
 		}
 	}
 )
-ChatCmdBuilder.new("adminmoney", 
+ChatCmdBuilder.new("money", 
 	function(cmd)
-		cmd:sub("give :to :amount:int", function(to, amount)
+		cmd:sub("give :to :amount:int", function(name, to, amount)
 			if money.playerlist[to] ~= nil then
-				--money.add(to, amount)--(to, amount)
-				minetest.chat_send_player("SonosFuer", "to: " .. to .. " amount: " .. amount)
+				money.add(to, amount)
 				return true
 			else
 				return false, "player does not exist"
@@ -249,7 +248,7 @@ ChatCmdBuilder.new("adminmoney",
 	end, {
 		description = "admin money command",
 		privs = {
-			basic_privs
+			money_create
 		}
 	}
 

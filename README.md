@@ -1,7 +1,9 @@
 # Minetest-money
 ### Version 0.1.1
 ### Minetest Version 0.4.16
-###Liscense: MIT -> https://opensource.org/licenses/MIT
+Liscense: MIT -> https://opensource.org/licenses/MIT
+Author: SonosFuer
+
 Money API for use in minetest
 
 
@@ -9,6 +11,13 @@ Money API for use in minetest
 This mod adds a bottom line framework for in game money
 
 Each player has an additional money attribute
+
+## API
+### money.add(player, ammount)
+Adds the ammount specified by the ammount value passed to the player passed. 
+Returns true on success
+Returns false if ammount is <0
+Returns false if player does not exist
 
 ##Credits
 

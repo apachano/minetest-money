@@ -10,7 +10,7 @@ Code from mana by Wuzzy is used under WTFPL Liscense
 ]===]
 
 --[Add Chat Command Builder By rubenwardy * would like to add support but cant figure out :(]
---dofile("ChatCmdBuilder.lua")
+dofile(minetest.get_modpath("money") .. "/ChatCmdBuilder.lua")
 
 --[[ I need to figure out how this works to use it :/ coming soon?
 local S
@@ -46,10 +46,11 @@ function money.get(playername)
 end
 
 function money.add(playername, value)
-	local t = money.playerlist[playername]
+	value = tonumber(value)
+	local player = money.playerlist[playername]
 	value = money.round(value)
-	if(t ~= nil and value >= 0) then
-		t.money = t.money + value 
+	if(player ~= nil and value >= 0) then
+		player.money = player.money + value 
 		money.hud_update(playername)
 		return true
 	else
@@ -203,32 +204,53 @@ money.round = function(x)
 	return math.ceil(math.floor(x+0.5))
 end
 
+function money.help()
+	minetest.chat_send_player(name, "=====Money=====")
+	minetest.chat_send_player(name, "/sendmoney <player> <ammount> -> sends money to specified player")
+	minetest.chat_send_player(name, "=====Money=====")
+	minetest.chat_send_player(name, "=====Money=====")
+	minetest.chat_send_player(name, "=====Money=====")
+	minetest.chat_send_player(name, "=====Money=====")
+end
+
 --[===[
 	Chat Commands
 ]===]
 
-minetest.register_chatcommand("sendmoney", {
-	privs = {
-		interact = true
-	},
-
-	func = money.send(name, param, 10)
-
-})
-
---[[
-ChatCmdBuilder.new("money", function(cmd)
-	cmd:sub("send :to :ammount", function(name, to, ammount)
-		local player = minetest.get_player_by_name(target)
-		if player then
-			money.send(player:get_player_name(), to, ammount)
-		end
-	end)
-end, {
-	description = "Momey mod for MineTest",
-	privs = {
-		basic_privs
+ChatCmdBuilder.new("money", 
+	function(cmd)
+		cmd:sub("send :to :ammount", function(name, to, ammount)
+			local player = minetest.get_player_by_name(to)
+			if player then
+				money.send(player:get_player_name(), to, ammount)
+				return true
+			else
+				return false, "player does not exist"
+			end
+		end)
+	end, {
+		description = "Momey mod for MineTest",
+		privs = {
+			basic_privs
+		}
 	}
-}
+)
+ChatCmdBuilder.new("adminmoney", 
+	function(cmd)
+		cmd:sub("give :to :ammount:int", function(to, ammount)
+			if money.playerlist[to] ~= nil then
+				--money.add(to, ammount)--(to, ammount)
+				minetest.chat_send_player("SonosFuer", "to: " .. to .. " ammount: " .. ammount)
+				return true
+			else
+				return false, "player does not exist"
+			end
+		end)
+	end, {
+		description = "admin money command",
+		privs = {
+			basic_privs
+		}
+	}
 
-)]]--
+)

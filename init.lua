@@ -3,13 +3,14 @@ Money API
 This mod adds money to players
 
 Code from mana by Wuzzy is used under WTFPL Liscense
-check his profile out at minetest.net (I cant add a url because the minetest engine does not like the characters)
-
 ]]
 
 --[===[
 	Initialization
 ]===]
+
+--Add Chat Command Builder By rubenwardy
+dofile(minetest.get_modpath("money") .. "/ChatCmdBuilder.lua")
 
 --[[ I need to figure out how this works to use it :/ coming soon?
 local S
@@ -45,10 +46,11 @@ function money.get(playername)
 end
 
 function money.add(playername, value)
-	local t = money.playerlist[playername]
+	value = tonumber(value)
+	local player = money.playerlist[playername]
 	value = money.round(value)
-	if(t ~= nil and value >= 0) then
-		t.money = t.money + value 
+	if(player ~= nil and value >= 0) then
+		player.money = player.money + value 
 		money.hud_update(playername)
 		return true
 	else
@@ -62,6 +64,23 @@ function money.subtract(playername, value)
 	if(t ~= nil and t.money >= value and value >= 0) then
 		t.money = t.money - value 
 		money.hud_update(playername)
+		return true
+	else
+		return false
+	end
+end
+
+function money.send(sender, reciver, value)
+	local Sender = money.playerlist[sender]
+	local Reciver = money.playerlist[reciver]
+	value = money.round(value)
+	if(Sender ~= nil and Reciver ~= nil and Sender.money > value and value >= 0) then
+		money.subtract(sender, value)
+		money.add(reciver, value)
+		minetest.chat_send_player("sender", "You sent" .. value .. "to" .. reciver)
+		minetest.chat_send_player("reciver", "You recived" .. value .. "from" .. sender)
+		money.hud_update(sender)
+		money.hud_update(reciver)
 		return true
 	else
 		return false
@@ -137,7 +156,7 @@ minetest.register_on_joinplayer(
 		
 		if money.playerlist[playername] == nil then
 			money.playerlist[playername] = {}
-			money.playerlist[playername].money = 0
+			money.playerlist[playername].money = 50
 		end
 
 		money.hud_add(playername)
@@ -180,6 +199,65 @@ end
 --[===[
 	Helper functions
 ]===]
+
 money.round = function(x)
 	return math.ceil(math.floor(x+0.5))
 end
+
+function money.help()
+	minetest.chat_send_player(name, "=====Money=====")
+	minetest.chat_send_player(name, "/sendmoney <player> <amount> -> sends money to specified player")
+	minetest.chat_send_player(name, "=====Money=====")
+	minetest.chat_send_player(name, "=====Money=====")
+	minetest.chat_send_player(name, "=====Money=====")
+	minetest.chat_send_player(name, "=====Money=====")
+end
+
+--[===[
+	Chat Commands
+]===]
+
+ChatCmdBuilder.new("money", 
+	function(cmd)
+		cmd:sub("send :to :amount", function(name, to, amount)
+			local player = minetest.get_player_by_name(to)
+			if player then
+				money.send(name, to, amount)
+				return true
+			else
+				return false, "player does not exist"
+			end
+		end)
+	end, {
+		description = "Momey mod for MineTest",
+		privs = {
+			basic_privs
+		}
+	}
+)
+ChatCmdBuilder.new("money", 
+	function(cmd)
+		cmd:sub("give :to :amount:int", function(name, to, amount)
+			if money.playerlist[to] ~= nil then
+				money.add(to, amount)
+				return true
+			else
+				return false, "Player does not exist"
+			end
+		end)
+		cmd:sub("take :from :ammount:int", function(name, from, amount)
+			if money.playerList[from] ~= nil then
+				money.subtract(from, amount))
+				return true;
+			else
+				return false; "Player does not exist"
+			end
+		end)
+	end, {
+		description = "admin money command",
+		privs = {
+			money_create
+		}
+	}
+
+)

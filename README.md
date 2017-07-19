@@ -51,14 +51,14 @@ Requires money_create privilage
 Prints how much money is in a players account
 
 
-##Credits
+## Credits
 
 >>>>>>> refs/remotes/origin/development
 This mod is "Forked" From Wuzzys mana mod and modified to be used as an interface for money. Credit for original code goes to Wuzzy.
 Check out his profile on the Minetest forums here
-https://forum.minetest.net/memberlist.php?mode=viewprofile&u=3082
+-> https://forum.minetest.net/memberlist.php?mode=viewprofile&u=3082
 Also check out his original mana mod here
-https://forum.minetest.net/viewtopic.php?f=9&t=11154
+-> https://forum.minetest.net/viewtopic.php?f=9&t=11154
 
 <<<<<<< HEAD
 ## Description
@@ -67,5 +67,9 @@ This mod adds a bottom line framework for in game money
 Each player has an additional money attribute
 =======
 This mod impliments ChatCmdBuilder by rubenwardy
+<<<<<<< HEAD
 https://github.com/rubenwardy/ChatCmdBuilder
+>>>>>>> refs/remotes/origin/development
+=======
+-> https://github.com/rubenwardy/ChatCmdBuilder
 >>>>>>> refs/remotes/origin/development

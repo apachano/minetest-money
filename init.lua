@@ -22,7 +22,6 @@ end
 ]]--
 money = {}
 money.playerlist = {}
-
 money.settings = {}
 
 --[===[
@@ -246,7 +245,7 @@ ChatCmdBuilder.new("money",
 			end
 		end)
 	end, {
-		description = "get player money value"
+		description = "get player money value",
 		privs = {
 			money_check
 		}
@@ -264,10 +263,10 @@ ChatCmdBuilder.new("money",
 		end)
 		cmd:sub("take :from :ammount:int", function(name, from, amount)
 			if money.playerList[from] ~= nil then
-				money.subtract(from, amount))
-				return true;
+				money.subtract(from, amount)
+				return true
 			else
-				return false; "Player does not exist"
+				return false, "Player does not exist"
 			end
 		end)
 	end, {

@@ -21,48 +21,52 @@ else
 end
 ]]--
 money = {}
-money.playerlist = {}
-money.settings = {}
+money.config = {}
+money.config.init = 100
 
 --[===[
 	API functions
 ]===]
 
-function money.set(playername, value) 
+function money.set(player, value)
+	local value = money.round(value)
+
 	if value < 0 then
-		minetest.log("info", "[money] Warning: money.set was called with negative value!")
 		value = 0
+		money.hud_update(player)
+		return
 	end
-	value = money.round(value)
-	if money.playerlist[playername].money ~= value then
-		money.playerlist[playername].money = value
-		money.hud_update(playername)
+	if player:get_attribute("money:purse") ~= value then
+		player:set_attribute("money:purse", tostring(value))
+		money.hud_update(player)
 	end
 end
 
-function money.get(playername)
-	return money.playerlist[playername].money
+function money.get(player)
+	return player:get_attribute("money:purse")
 end
 
-function money.add(playername, value)
-	value = tonumber(value)
-	local player = money.playerlist[playername]
-	value = money.round(value)
+function money.add(player, value)
+	local value = money.round(value)
+	local bank = tonumber(player:get_attribute("money:purse"))
+
 	if(player ~= nil and value >= 0) then
-		player.money = player.money + value 
-		money.hud_update(playername)
+		bank = tostring(bank + value)
+		player:set_attribute("money:purse", bank)
+		money.hud_update(player)
 		return true
 	else
 		return false
 	end
 end
 
-function money.subtract(playername, value)
-	local t = money.playerlist[playername]
-	value = money.round(value)
-	if(t ~= nil and t.money >= value and value >= 0) then
-		t.money = t.money - value 
-		money.hud_update(playername)
+function money.subtract(player, value)
+	local value = money.round(value)
+	local bank = tonumber(player:get_attribute("money:purse"))
+
+	if(player ~= nil and bank >= value and value >= 0) then
+		bank = tostring(bank - value)
+		money.hud_update(player)
 		return true
 	else
 		return false
@@ -70,129 +74,67 @@ function money.subtract(playername, value)
 end
 
 function money.send(sender, reciver, value)
-	local Sender = money.playerlist[sender]
-	local Reciver = money.playerlist[reciver]
-	value = money.round(value)
-	if(Sender ~= nil and Reciver ~= nil and Sender.money > value and value >= 0) then
-		money.subtract(sender, value)
-		money.add(reciver, value)
-		minetest.chat_send_player("sender", "You sent" .. value .. "to" .. reciver)
-		minetest.chat_send_player("reciver", "You recived" .. value .. "from" .. sender)
-		money.hud_update(sender)
-		money.hud_update(reciver)
-		return true
-	else
-		return false
+	local value = money.round(value)
+
+	if(sender ~= nil and reciver ~= nil and sender:get_attribute("money:purse") > value and value >= 0) then
+		if(money.subtract(sender, value)) then
+			money.add(reciver, value)
+			minetest.chat_send_player(sender, "You sent" .. value .. "to" .. reciver:get_player_name())
+			minetest.chat_send_player(reciver, "You recived" .. value .. "from" .. sender:get_player_name())
+			money.hud_update(sender)
+			money.hud_update(reciver)
+			return true
+		end
 	end
+	return false
 end
 
 --[===[
 	File handling, loading data, saving data, setting up stuff for players.
 ]===]
 
--- Load the playerlist from a previous session, if available.
-do
-	local filepath = minetest.get_worldpath().."/money.mt"
-	local file = io.open(filepath, "r")
-	if file then
-		minetest.log("action", "[money] money.mt opened.")
-		local string = file:read()
-		io.close(file)
-		if(string ~= nil) then
-			local savetable = minetest.deserialize(string)
-			money.playerlist = savetable.playerlist
-			minetest.debug("[money] money.mt successfully read.")
-		end
-	end
-end
-
-function money.save_to_file()
-	local savetable = {}
-	savetable.playerlist = money.playerlist
-
-	local savestring = minetest.serialize(savetable)
-
-	local filepath = minetest.get_worldpath().."/money.mt"
-	local file = io.open(filepath, "w")
-	if file then
-		file:write(savestring)
-		io.close(file)
-		minetest.log("action", "[money] Wrote money data into "..filepath..".")
-	else
-		minetest.log("error", "[money] Failed to write money data into "..filepath..".")
-	end
-end
-
-
-minetest.register_on_respawnplayer(
-	function(player)
-		local playername = player:get_player_name()
-		money.set(playername, 0)
-		money.hud_update(playername)
-	end
-)
-
 minetest.register_on_leaveplayer(
 	function(player)
-		local playername = player:get_player_name()
-		if not minetest.get_modpath("hudbars") ~= nil then
-			money.hud_remove(playername)
-		end
-		money.save_to_file()
-	end
-)
-
-minetest.register_on_shutdown(
-	function()
-		minetest.log("action", "[money] Server shuts down. Rescuing data into money.mt")
-		money.save_to_file()
+		money.hud_remove(player)
 	end
 )
 
 minetest.register_on_joinplayer(
 	function(player)
-		local playername = player:get_player_name()
-		
-		if money.playerlist[playername] == nil then
-			money.playerlist[playername] = {}
-			money.playerlist[playername].money = 50
+		if player:get_attribute("money:purse") == nil then
+			player:set_attribute("money:purse", "100")
 		end
-
-		money.hud_add(playername)
+		--money.hud_add(playername)
 	end
 )
 
 --[===[
 	HUD functions
 ]===]
-function money.moneystring(playername)
-	return "money:" .. money.get(playername)
+function money.moneystring(player)
+	return "money:" .. money.get(player)
 end
 
-function money.hud_add(playername)
-	local player = minetest.get_player_by_name(playername)
+function money.hud_add(player)
 	local id = player:hud_add({
 		hud_elem_type = "text",
-		position = { x = 0.5, y=1 },
-		text = money.moneystring(playername),
+		position = { x = 1, y=1 },
+		text = player:get_attribute("money:purse"),
 		scale = { x = 0, y = 0 },
 		alignment = { x = 1, y = 0},
 		direction = 1,
 		number = 0xFFFFFF,
 		offset = { x = -262, y = -103}
 	})
-	money.playerlist[playername].hudid = id
-	return id
+	player:set_attribute("money:hudid", id)
 end
 
-function money.hud_update(playername)
-	local player = minetest.get_player_by_name(playername)
-	player:hud_change(money.playerlist[playername].hudid, "text", money.moneystring(playername))
+function money.hud_update(player)
+	player:hud_change(player:get_attribute("money:hudid"), "text", money.moneystring(player))
 end
 
-function money.hud_remove(playername)
-	local player = minetest.get_player_by_name(playername)
-	player:hud_remove(money.playerlist[playername].hudid)
+function money.hud_remove(player)
+	player:hud_remove(player:get_attribute("money:hudid"))
 end
 
 --[===[
@@ -200,70 +142,74 @@ end
 ]===]
 
 money.round = function(x)
-	return math.ceil(math.floor(x+0.5))
+	return math.ceil(math.floor(tonumber(x)+0.5))
 end
 
-function money.help()
+function money.help(name)
 	minetest.chat_send_player(name, "=====Money=====")
-	minetest.chat_send_player(name, "/sendmoney <player> <amount> -> sends money to specified player")
-	minetest.chat_send_player(name, "=====Money=====")
-	minetest.chat_send_player(name, "=====Money=====")
-	minetest.chat_send_player(name, "=====Money=====")
+	minetest.chat_send_player(name, "/money send <player> <amount> -> Sends money to specified player")
+	minetest.chat_send_player(name, "/money give <player> <amount> -> Admin gives money to a specific player ")
+	minetest.chat_send_player(name, "/money take <player> <amount> -> Admin takes money from a plauer")
+	minetest.chat_send_player(name, "/money check <player>         -> Check how much money a player has")
 	minetest.chat_send_player(name, "=====Money=====")
 end
-
 --[===[
+
 	Chat Commands
 ]===]
-
+minetest.register_chatcommand("money", {
+	params = "<params>",
+	description = "Money command interface, type /money help",
+	privs = {interact = true},
+	func = function(name , params)
+		if params == "help" then
+			money.help(name)
+			return
+		end
+		if params == "balance" then
+			money.get(name)
+			return
+		end
+		minetest.chat_send_player(name, "I dont recognize the command /money" .. params)
+		money.help(name)
+	end,
+})
+--[[
 ChatCmdBuilder.new("money", 
 	function(cmd)
 		cmd:sub("send :to :amount", function(name, to, amount)
+			minetest.chat_send_player(name,"ran send command")
 			local player = minetest.get_player_by_name(to)
-			if player then
-				money.send(name, to, amount)
+			local from = minetest.get_player_by_name(name)
+			if player and from then
+				money.send(from, player, amount)
 				return true
 			else
 				return false, "player does not exist"
 			end
 		end)
-	end, {
-		description = "Momey mod for MineTest",
-		privs = {
-			basic_privs
-		}
-	}
-)
-ChatCmdBuilder.new("money",
-	function(cmd)
-		cmd:sub("check :player", function(name, player)
-			if money.playerlist[player] ~= nil then
-				money.get(player)
+		cmd:sub("check :playername", function(name, playername)
+			local player = minetest.get_player_by_name(playername)
+			minetest.chat_send_player(minetest.get_player_by_name(name),"ran check command")
+			minetest.chat_send_player(name, money.get(player))
+		end)
+		cmd:sub("balance", function(name)
+			local player = minetest.get_player_by_name(name)
+			minetest.chat_send_player(name, money.get(player))
+		end)
+		cmd:sub("give :target :amount:int", function(name, target, amount)
+			local player = minetest.get_player_by_name(target)
+			if player then
+				money.add(player, amount)
 				return true
 			else
 				return false, "Player does not exist"
 			end
 		end)
-	end, {
-		description = "get player money value",
-		privs = {
-			money_check
-		}
-	}
-)
-ChatCmdBuilder.new("money", 
-	function(cmd)
-		cmd:sub("give :to :amount:int", function(name, to, amount)
-			if money.playerlist[to] ~= nil then
-				money.add(to, amount)
-				return true
-			else
-				return false, "Player does not exist"
-			end
-		end)
-		cmd:sub("take :from :ammount:int", function(name, from, amount)
-			if money.playerList[from] ~= nil then
-				money.subtract(from, amount)
+		cmd:sub("take :target :ammount:int", function(name, target, amount)
+			local player = minetest.get_player_by_name(target)
+			if player then
+				money.subtract(player, amount)
 				return true
 			else
 				return false, "Player does not exist"
@@ -272,8 +218,7 @@ ChatCmdBuilder.new("money",
 	end, {
 		description = "admin money command",
 		privs = {
-			money_create
+			interact = true
 		}
 	}
-
-)
+)]]

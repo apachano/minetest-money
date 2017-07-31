@@ -1,11 +1,14 @@
 # Minetest-money
+<<<<<<< HEAD
 ### Version 0.2.0
+=======
+### Version 0.3.1
+>>>>>>> refs/remotes/origin/development
 ### Minetest Version 0.4.16
-Liscense: MIT -> https://opensource.org/licenses/MIT
+Liscense: MIT https://opensource.org/licenses/MIT
 Author: SonosFuer
 
 Money API for use in minetest
-
 
 ## Description
 This mod adds a bottom line framework for in game money
@@ -48,6 +51,7 @@ Removes money from players account, money vanishes
 Requires money_create privilage
 
 /money check <playername>
+<<<<<<< HEAD
 Prints how much money is in a players account
 
 
@@ -72,4 +76,7 @@ https://github.com/rubenwardy/ChatCmdBuilder
 >>>>>>> refs/remotes/origin/development
 =======
 -> https://github.com/rubenwardy/ChatCmdBuilder
+>>>>>>> refs/remotes/origin/development
+=======
+Prints how much money is in a players account
 >>>>>>> refs/remotes/origin/development

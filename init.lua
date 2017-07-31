@@ -150,7 +150,6 @@ function money.help(name)
 	minetest.chat_send_player(name, "=====Money==============================================================")
 end
 --[===[
-
 	Chat Commands
 ]===]
 minetest.register_privilege("moneymagic", "Allows the player to create and delete money")

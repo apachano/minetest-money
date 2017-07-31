@@ -1,11 +1,16 @@
 --[[
 Money API
 This mod adds money to players
+
+Code from mana by Wuzzy is used under WTFPL Liscense
 ]]
 
 --[===[
 	Initialization
 ]===]
+
+--Add Chat Command Builder By rubenwardy
+dofile(minetest.get_modpath("money") .. "/ChatCmdBuilder.lua")
 
 --[[ I need to figure out how this works to use it :/ coming soon?
 local S
@@ -142,14 +147,15 @@ money.round = function(x)
 end
 
 function money.help(name)
-	minetest.chat_send_player(name, "=====Money==============================================================")
+	minetest.chat_send_player(name, "=====Money=====")
 	minetest.chat_send_player(name, "/money send <player> <amount> -> Sends money to specified player")
 	minetest.chat_send_player(name, "/money give <player> <amount> -> Admin gives money to a specific player ")
 	minetest.chat_send_player(name, "/money take <player> <amount> -> Admin takes money from a plauer")
 	minetest.chat_send_player(name, "/money check <player>         -> Check how much money a player has")
-	minetest.chat_send_player(name, "=====Money==============================================================")
+	minetest.chat_send_player(name, "=====Money=====")
 end
 --[===[
+
 	Chat Commands
 ]===]
 minetest.register_privilege("moneymagic", "Allows the player to create and delete money")

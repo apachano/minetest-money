@@ -56,12 +56,14 @@ function money.add(playername, value)
 	end
 end
 
-function money.subtract(player, value)
+function money.subtract(playername, value)
+	local player = minetest.get_player_by_name(playername)
 	local value = money.round(value)
 	local bank = tonumber(player:get_attribute("money:purse"))
 
 	if(player ~= nil and bank >= value and value >= 0) then
 		bank = tostring(bank - value)
+		player:set_attribute("money:purse", bank)
 		money.hud_update(player)
 		return true
 	else
@@ -69,20 +71,25 @@ function money.subtract(player, value)
 	end
 end
 
-function money.send(sender, reciver, value)
+function money.send(send, recive, value)
+
+	local sender = minetest.get_player_by_name(send)
+	local reciver = minetest.get_player_by_name(recive)
 	local value = money.round(value)
 
-	if(sender ~= nil and reciver ~= nil and sender:get_attribute("money:purse") > value and value >= 0) then
-		if(money.subtract(sender, value)) then
-			money.add(reciver, value)
-			minetest.chat_send_player(sender, "You sent" .. value .. "to" .. reciver:get_player_name())
-			minetest.chat_send_player(reciver, "You recived" .. value .. "from" .. sender:get_player_name())
+	if(sender ~= nil and reciver ~= nil and money.round(sender:get_attribute("money:purse")) > value and value >= 0) then
+		if(money.subtract(send, value)) then
+			money.add(recive, value)
+			minetest.chat_send_player(send, "You sent " .. value .. " to " .. recive)
+			minetest.chat_send_player(recive, "You recived " .. value .. " from " .. send)
 			money.hud_update(sender)
 			money.hud_update(reciver)
 			return true
 		end
+			minetest.chat_send_player(send, "e1")
 	end
-	return false
+	minetest.chat_send_player(send, "e2")
+	return false, "Something went wrong :("
 end
 
 --[===[

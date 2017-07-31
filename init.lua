@@ -46,7 +46,8 @@ function money.get(player)
 	return player:get_attribute("money:purse")
 end
 
-function money.add(player, value)
+function money.add(playername, value)
+	local player = minetest.get_player_by_name(playername)
 	local value = money.round(value)
 	local bank = tonumber(player:get_attribute("money:purse"))
 
@@ -104,7 +105,7 @@ minetest.register_on_joinplayer(
 		if player:get_attribute("money:purse") == nil then
 			player:set_attribute("money:purse", "100")
 		end
-		--money.hud_add(playername)
+		money.hud_add(player)
 	end
 )
 
@@ -119,7 +120,7 @@ function money.hud_add(player)
 	local id = player:hud_add({
 		hud_elem_type = "text",
 		position = { x = 1, y=1 },
-		text = player:get_attribute("money:purse"),
+		text = money.moneystring(player),
 		scale = { x = 0, y = 0 },
 		alignment = { x = 1, y = 0},
 		direction = 1,
@@ -157,68 +158,36 @@ end
 
 	Chat Commands
 ]===]
+minetest.register_privilege("moneymagic", "Allows the player to create and delete money")
+
 minetest.register_chatcommand("money", {
-	params = "<params>",
 	description = "Money command interface, type /money help",
 	privs = {interact = true},
-	func = function(name , params)
-		if params == "help" then
+	func = function(name, param)
+		local args = param:split(" ")
+
+		if args[1] == "help" then
 			money.help(name)
 			return
-		end
-		if params == "balance" then
-			money.get(name)
+		elseif args[1] == "send" then
+			money.send(name, args[2], args[3])
+			return
+		elseif args[1] == "give" then
+			if minetest.get_player_privs(name).moneymagic then
+				money.add(args[2], args[3])
+			end
+			return
+		elseif args[1] == "take" then
+			if minetest.get_player_privs(name).moneymagic then
+				money.subtract(args[2], args[3])
+			end
+			return
+		elseif args[1] == "check" then
+			if args[2] == nil then
+				args[2] = name
+			end
+			minetest.chat_send_player(name, money.get(minetest.get_player_by_name(args[2])))
 			return
 		end
-		minetest.chat_send_player(name, "I dont recognize the command /money" .. params)
-		money.help(name)
-	end,
+	end
 })
---[[
-ChatCmdBuilder.new("money", 
-	function(cmd)
-		cmd:sub("send :to :amount", function(name, to, amount)
-			minetest.chat_send_player(name,"ran send command")
-			local player = minetest.get_player_by_name(to)
-			local from = minetest.get_player_by_name(name)
-			if player and from then
-				money.send(from, player, amount)
-				return true
-			else
-				return false, "player does not exist"
-			end
-		end)
-		cmd:sub("check :playername", function(name, playername)
-			local player = minetest.get_player_by_name(playername)
-			minetest.chat_send_player(minetest.get_player_by_name(name),"ran check command")
-			minetest.chat_send_player(name, money.get(player))
-		end)
-		cmd:sub("balance", function(name)
-			local player = minetest.get_player_by_name(name)
-			minetest.chat_send_player(name, money.get(player))
-		end)
-		cmd:sub("give :target :amount:int", function(name, target, amount)
-			local player = minetest.get_player_by_name(target)
-			if player then
-				money.add(player, amount)
-				return true
-			else
-				return false, "Player does not exist"
-			end
-		end)
-		cmd:sub("take :target :ammount:int", function(name, target, amount)
-			local player = minetest.get_player_by_name(target)
-			if player then
-				money.subtract(player, amount)
-				return true
-			else
-				return false, "Player does not exist"
-			end
-		end)
-	end, {
-		description = "admin money command",
-		privs = {
-			interact = true
-		}
-	}
-)]]

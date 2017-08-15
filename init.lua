@@ -16,6 +16,8 @@ else
 end
 ]]--
 money = {}
+money.bank = {}
+money.bank.players = {}
 money.config = {}
 money.config.init = 100
 
@@ -23,32 +25,33 @@ money.config.init = 100
 	API functions
 ]===]
 
-function money.set(player, value)
+function money.set(playername, value)
 	local value = money.round(value)
 
 	if value < 0 then
 		value = 0
-		money.hud_update(player)
+		money.hud_update(player.get_player_by_name(playername))
 		return
 	end
-	if player:get_attribute("money:purse") ~= value then
-		player:set_attribute("money:purse", tostring(value))
-		money.hud_update(player)
+	if money.bank.players[playername].purse ~= value and money.bank.players[playername] ~= nil then
+		money.bank.players[playername].purse = tostring(value)
+		money.hud_update(player.get_player_by_name(playername))
 	end
 end
 
 function money.get(player)
-	return player:get_attribute("money:purse")
+	playername = player:get_player_name()
+	return money.bank.players[playername].purse
 end
 
 function money.add(playername, value)
 	local player = minetest.get_player_by_name(playername)
 	local value = money.round(value)
-	local bank = tonumber(player:get_attribute("money:purse"))
 
-	if(player ~= nil and value >= 0) then
+	if(money.bank.players[playername] ~= nil and value >= 0) then
+		local bank = tonumber(money.bank.players[playername].purse)
 		bank = tostring(bank + value)
-		player:set_attribute("money:purse", bank)
+		money.bank.players[playername].purse = bank
 		money.hud_update(player)
 		return true
 	else
@@ -59,11 +62,11 @@ end
 function money.subtract(playername, value)
 	local player = minetest.get_player_by_name(playername)
 	local value = money.round(value)
-	local bank = tonumber(player:get_attribute("money:purse"))
+	local bank = tonumber(money.bank.players[playername].purse)
 
-	if(player ~= nil and bank >= value and value >= 0) then
+	if(money.bank.players[playername] ~= nil and bank >= value and value >= 0) then
 		bank = tostring(bank - value)
-		player:set_attribute("money:purse", bank)
+		money.bank.players[playername].purse = bank
 		money.hud_update(player)
 		return true
 	else
@@ -77,7 +80,7 @@ function money.send(send, recive, value)
 	local reciver = minetest.get_player_by_name(recive)
 	local value = money.round(value)
 
-	if(sender ~= nil and reciver ~= nil and money.round(sender:get_attribute("money:purse")) > value and value >= 0) then
+	if(sender ~= nil and reciver ~= nil and money.round(money.bank.players[sender].purse) > value and value >= 0) then
 		if(money.subtract(send, value)) then
 			money.add(recive, value)
 			minetest.chat_send_player(send, "You sent " .. value .. " to " .. recive)
@@ -104,8 +107,10 @@ minetest.register_on_leaveplayer(
 
 minetest.register_on_joinplayer(
 	function(player)
-		if player:get_attribute("money:purse") == nil then
-			player:set_attribute("money:purse", "100")
+		playername = player:get_player_name()
+		if money.bank.players[playername] == nil then
+			money.bank.players[playername] = {}
+			money.bank.players[playername].purse = 100
 		end
 		money.hud_add(player)
 	end
@@ -192,3 +197,52 @@ minetest.register_chatcommand("money", {
 		end
 	end
 })
+
+
+
+--[[
+File io
+]]
+
+do
+	local filepath = minetest.get_worldpath().."/money.mt"
+	local file = io.open(filepath, "r")
+	if file then
+		minetest.log("action", "[money] money.mt opened.")
+		local string = file:read()
+		io.close(file)
+		if(string ~= nil) then
+			money.bank = minetest.deserialize(string)
+			
+			minetest.debug("[money] money.mt successfully read.")
+		else
+			minetest.debug("[money] String nill, read failed")
+		end
+	end
+end
+
+--Save towns database to file
+
+function money.save_to_file()
+	local save = money.bank
+	local savestring = minetest.serialize(save)
+
+	local filepath = minetest.get_worldpath().."/money.mt"
+	local file = io.open(filepath, "w")
+	if file then
+		file:write(savestring)
+		io.close(file)
+		minetest.log("action", "[money] Wrote money data into "..filepath..".")
+	else
+		minetest.log("error", "[money] Failed to write money data into "..filepath..".")
+	end
+end
+
+--Catch the server while it shuts down
+
+minetest.register_on_shutdown(
+	function()
+		minetest.log("action", "[money] Server shuts down. Rescuing data into money.mt")
+		money.save_to_file()
+	end
+)

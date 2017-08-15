@@ -39,8 +39,7 @@ function money.set(playername, value)
 	end
 end
 
-function money.get(player)
-	playername = player:get_player_name()
+function money.get(playername)
 	return money.bank.players[playername].purse
 end
 
@@ -60,14 +59,13 @@ function money.add(playername, value)
 end
 
 function money.subtract(playername, value)
-	local player = minetest.get_player_by_name(playername)
 	local value = money.round(value)
 	local bank = tonumber(money.bank.players[playername].purse)
 
 	if(money.bank.players[playername] ~= nil and bank >= value and value >= 0) then
 		bank = tostring(bank - value)
 		money.bank.players[playername].purse = bank
-		money.hud_update(player)
+		money.hud_update(minetest.get_player_by_name(playername))
 		return true
 	else
 		return false
@@ -76,17 +74,15 @@ end
 
 function money.send(send, recive, value)
 
-	local sender = minetest.get_player_by_name(send)
-	local reciver = minetest.get_player_by_name(recive)
 	local value = money.round(value)
 
-	if(sender ~= nil and reciver ~= nil and money.round(money.bank.players[sender].purse) > value and value >= 0) then
+	if(money.bank.players[recive] ~= nil and money.round(money.bank.players[send].purse) >= value and value >= 0) then
 		if(money.subtract(send, value)) then
 			money.add(recive, value)
 			minetest.chat_send_player(send, "You sent " .. value .. " to " .. recive)
 			minetest.chat_send_player(recive, "You recived " .. value .. " from " .. send)
-			money.hud_update(sender)
-			money.hud_update(reciver)
+			money.hud_update(minetest.get_player_by_name(send))
+			money.hud_update(minetest.get_player_by_name(recive))
 			return true
 		end
 			minetest.chat_send_player(send, "e1")
@@ -120,7 +116,7 @@ minetest.register_on_joinplayer(
 	HUD functions
 ]===]
 function money.moneystring(player)
-	return "money:" .. money.get(player)
+	return "money:" .. money.get(player:get_player_name())
 end
 
 function money.hud_add(player)
@@ -138,7 +134,9 @@ function money.hud_add(player)
 end
 
 function money.hud_update(player)
-	player:hud_change(player:get_attribute("money:hudid"), "text", money.moneystring(player))
+	if player then
+		player:hud_change(player:get_attribute("money:hudid"), "text", money.moneystring(player))
+	end
 end
 
 function money.hud_remove(player)
